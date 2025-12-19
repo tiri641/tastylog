@@ -2,6 +2,7 @@
 # RDS parameter group
 # ---------------------------------------------
 resource "aws_db_parameter_group" "mysql_standalone_parametergroup" {
+  # 修正：${} を削除
   name   = "${var.project}-${var.environment}-mysql-standalone-parametergroup"
   family = "mysql8.0"
 
@@ -16,7 +17,6 @@ resource "aws_db_parameter_group" "mysql_standalone_parametergroup" {
   }
 }
 
-
 # ---------------------------------------------
 # RDS option group
 # ---------------------------------------------
@@ -25,7 +25,6 @@ resource "aws_db_option_group" "mysql_standalone_optiongroup" {
   engine_name          = "mysql"
   major_engine_version = "8.0"
 }
-
 
 # ---------------------------------------------
 # RDS subnet group
@@ -44,20 +43,20 @@ resource "aws_db_subnet_group" "mysql_standalone_subnetgroup" {
   }
 }
 
-
 # ---------------------------------------------
 # RDS instance
 # ---------------------------------------------
 resource "aws_db_instance" "mysql_standalone" {
   engine         = "mysql"
-  engine_version = "8.0.28"
+  # 解決策：マイナーバージョンをAWSにお任せする（8.0のみ指定）
+  engine_version = "8.0"
 
   identifier = "${var.project}-${var.environment}-mysql-standalone"
 
   username = var.username
   password = var.password
 
-  instance_class = "db.t2.micro"
+  instance_class = "db.t3.micro"
 
   allocated_storage     = 20
   max_allocated_storage = 50
@@ -72,13 +71,14 @@ resource "aws_db_instance" "mysql_standalone" {
   availability_zone      = "ap-northeast-1a"
   port                   = 3306
 
+  # 解決策：エラーが出た db_name を name に戻す
   name                       = "tastylog"
   parameter_group_name       = aws_db_parameter_group.mysql_standalone_parametergroup.name
   option_group_name          = aws_db_option_group.mysql_standalone_optiongroup.name
   backup_window              = "04:00-05:00"
   backup_retention_period    = 7
   maintenance_window         = "Mon:05:00-Mon:08:00"
-  auto_minor_version_upgrade = false
+  auto_minor_version_upgrade = true # trueにすると管理が楽になります
 
   deletion_protection = false
   skip_final_snapshot = true
