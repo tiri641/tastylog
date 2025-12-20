@@ -47,7 +47,7 @@ resource "aws_db_subnet_group" "mysql_standalone_subnetgroup" {
 # RDS instance
 # ---------------------------------------------
 resource "aws_db_instance" "mysql_standalone" {
-  engine         = "mysql"
+  engine = "mysql"
   # 解決策：マイナーバージョンをAWSにお任せする（8.0のみ指定）
   engine_version = "8.0"
 
