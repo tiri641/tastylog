@@ -47,29 +47,29 @@ resource "aws_db_subnet_group" "mysql_standalone_subnetgroup" {
 # RDS instance
 # ---------------------------------------------
 resource "aws_db_instance" "mysql_standalone" {
-  engine =                                                        "mysql"
+  engine = "mysql"
   # 解決策：マイナーバージョンをAWSにお任せする（8.0のみ指定）
-  engine_version =                                                      "8.0"
+  engine_version = "8.0"
 
   identifier = "${var.project}-${var.environment}-mysql-standalone"
 
-                        username = var.username
+  username = var.username
   password = var.password
 
-  instance_class                                              = "db.t3.micro"
+  instance_class = "db.t3.micro"
 
-                        allocated_storage     = 20
-                  max_allocated_storage = 50
-        storage_type          = "gp2"
-                        storage_encrypted     = false
+  allocated_storage     = 20
+  max_allocated_storage = 50
+  storage_type          = "gp2"
+  storage_encrypted     = false
 
-                                           multi_az = false
+  multi_az = false
 
   db_subnet_group_name   = aws_db_subnet_group.mysql_standalone_subnetgroup.name
-                                    publicly_accessible    = false
-                                                    vpc_security_group_ids = [aws_security_group.db_sg.id]
-                                    availability_zone      = "ap-northeast-1a"
-                            port                   = 3306
+  publicly_accessible    = false
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  availability_zone      = "ap-northeast-1a"
+  port                   = 3306
 
   # 解決策：エラーが出た db_name を name に戻す
   name                       = "tastylog"
