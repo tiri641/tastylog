@@ -17,6 +17,9 @@ resource "aws_iam_role" "app_iam_role" {
     Name    = "${var.project}-${var.environment}-app-iam-role"
     Project = var.project
     Env     = var.environment
+
+    # タグを追加する
+    Message = "Hello"
   }
 }
 
