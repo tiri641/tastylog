@@ -34,7 +34,8 @@ jobs:
       - name: Setup terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{env.TF_VERSION}} # バージョンは環境変数で渡す
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
       - name: Terraform format
         run: |
           terraform fmt -check
