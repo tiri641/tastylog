@@ -114,6 +114,7 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
+
       - name: Terraform format
         run: terraform fmt -check
 
