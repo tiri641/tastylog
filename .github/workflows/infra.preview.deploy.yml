@@ -106,11 +106,7 @@ jobs:
   deploy:
     name: "Deploy"
     needs: preview
-    # 【重要】always()を入れ、かつ値が '2' (文字列) か 2 (数値) か不問にする判定式
-    if: |
-      always() && 
-      needs.preview.result != 'skipped' && 
-      (needs.preview.outputs.IF_PLAN_EXITCODE == '2' || needs.preview.outputs.IF_PLAN_EXITCODE == 2)
+    if: needs.preview.outputs.IF_PLAN_EXITCODE == 2
     environment: production
     runs-on: ubuntu-latest
     steps:
