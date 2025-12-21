@@ -25,12 +25,11 @@ defaults:
     working-directory: "10_infra/"
 
 jobs:
-  preview:
+  previews:
     name: "preview"
     runs-on: ubuntu-latest
     outputs: 
-      # ここで plan ステップの出力を明示的にジョブ出力として定義
-      IF_PLAN_EXITCODE: ${{ steps.plan.outputs.exitcode }}
+      IF_PLAN_EXITCODE: ${{ steps.plan.outputs.exitcode }} # Terraform Planの結果を取得する
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4 
@@ -38,7 +37,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          terraform_wrapper: false # wrapperをfalseにするとexitcodeが正しく取得できます
+          terraform_wrapper: false
 
       - name: Terraform format
         run: terraform fmt -check
@@ -56,8 +55,8 @@ jobs:
         run: terraform validate -no-color
 
       - name: Terraform plan
-        id: plan
-        continue-on-error: true
+        id: plan # Terraform Planの結果を渡せるようにidを付与する
+        continue-on-error: true # Terraform planがエラーになってもSlack通知を実行できるようにしたい
         run: |
           terraform plan \
             -var "project=${{ env.TF_PROJECT }}" \
@@ -76,10 +75,8 @@ jobs:
           payload: |
             {
               "channel": "C02G0N65NEN",
-              "text": "Terraform Preview Result",
               "attachments": [
                 {
-                  "fallback": "Terraform Preview Result",
                   "blocks": [
                     {
                       "type": "header",
@@ -93,7 +90,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                        "text": "${{ github.server_url }}/${{ github.repository}}/action/runs/${{ github.run_id }}"
                       }
                     }
                   ]
@@ -104,8 +101,7 @@ jobs:
   deploy:
     name: "Deploy"
     needs: preview
-    # needs.preview.result を見るのではなく、純粋に常に評価させて exitcode が 2 であるかを見ます
-    if: always() && needs.preview.outputs.IF_PLAN_EXITCODE == '2'
+    if: needs.preview.outputs.IF_PLAN_EXITCODE == 2
     environment: production
     runs-on: ubuntu-latest
     steps:
@@ -129,14 +125,3 @@ jobs:
 
       - name: Terraform init
         run: terraform init -no-color
-
-      - name: Terraform apply
-        run: |
-          terraform apply \
-            -var "project=${{ env.TF_PROJECT }}" \
-            -var "environment=${{ env.TF_ENVIRONMENT }}" \
-            -var "username=${{ secrets.MYSQL_USERNAME }}" \
-            -var "password=${{ secrets.MYSQL_PASSWORD }}" \
-            -input=false \
-            -no-color \
-            -auto-approve
