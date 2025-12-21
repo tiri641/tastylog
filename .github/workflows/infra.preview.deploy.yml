@@ -101,10 +101,7 @@ jobs:
   deploy:
     name: "Deploy"
     needs: preview
-    if: |
-      always() && 
-      needs.preview.result != 'skipped' && 
-      needs.preview.outputs.IF_PLAN_EXITCODE == '2'
+    if: always() && needs.preview.result != 'skipped'
     environment: production
     runs-on: ubuntu-latest
     steps:
