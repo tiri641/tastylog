@@ -101,7 +101,11 @@ jobs:
   deploy:
     name: "Deploy"
     needs: preview
-    if: needs.preview.outputs.IF_PLAN_EXITCODE == 2
+   # previewが終了コード2（failure扱い）でも、差分があるなら実行を試みる設定
+    if: |
+      always() && 
+      needs.preview.result != 'skipped' && 
+      needs.preview.outputs.IF_PLAN_EXITCODE == 2
     environment: production
     runs-on: ubuntu-latest
     steps:
@@ -113,7 +117,6 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
-
 
       - name: Terraform format
         run: terraform fmt -check
