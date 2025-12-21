@@ -129,6 +129,7 @@ jobs:
         run: terraform init -no-color
 
       - name: Terraform apply
+        id: apply # Terraform applyの結果を知るためにidを付与する
         run: |
           terraform apply \
             -var "project=${{ env.TF_PROJECT }}" \
@@ -138,3 +139,37 @@ jobs:
             -input=false \
             -no-color \
             -auto-approve
+      
+      - name: Slack notify
+        if: always() # terraform applyが成功したか失敗したかに関わらず実行させる
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            {
+              "channel": "C02G0N65NEN",
+              "text": "Terraform Preview Result",
+              "attachments": [
+                {
+                  "fallback": "Terraform Preview Result",
+                  "blocks": [
+                    {
+                      "type": "header",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Runner finished: ${{ steps.apply.outcome }}",
+                        "emoji": true
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
