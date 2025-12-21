@@ -11,10 +11,11 @@ jobs:
       - name: Send Slack Notification
         uses: slackapi/slack-github-action@v2.1.1
         with:
-          channel-id: 'C02G0N65NEN'  
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
           method: chat.postMessage
           payload: |
             {
+              "channel": "C02G0N65NEN",
               "attachments": [
                 {
                   "blocks": [
@@ -37,5 +38,3 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }} 
