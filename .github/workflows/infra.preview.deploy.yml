@@ -6,51 +6,57 @@ on:
       - main
     paths:
       - "10_infra/**"
-      - ".github/workflows/**" 
+      - ".github/workflows/**"
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
 
-env:  
+env:
   AWS_REGION: ap-northeast-1
   TF_VERSION: 1.2.8
   TF_PROJECT: tastylog
   TF_ENVIRONMENT: dev
 
 defaults:
-  run:  
+  run:
     shell: bash
     working-directory: "10_infra/"
 
 jobs:
   previews:
     name: "preview"
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
+    outputs: 
+      IF_PLAN_EXITCODE: ${{ steps.plan.outputs.exitcode }} # Terraform Planの結果を取得する
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4 
       - name: Setup terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
+
       - name: Terraform format
-        run: |
-          terraform fmt -check
+        run: terraform fmt -check
+
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5.1.1
+        uses: aws-actions/configure-aws-credentials@v4 
         with:
-          aws-region: ${{ env.AWS_REGION }} #環境変数で定義する
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }} # GitHubで設定したシークレットを使う
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+
       - name: Terraform init
-        run: |
-          terraform init -no-color
+        run: terraform init -no-color
+
       - name: Terraform validate
-        run: |
-          terraform validate -no-color
-      - name: terraform plan
+        run: terraform validate -no-color
+
+      - name: Terraform plan
+        id: plan # Terraform Planの結果を渡せるようにidを付与する
+        continue-on-error: true # Terraform planがエラーになってもSlack通知を実行できるようにしたい
         run: |
           terraform plan \
             -var "project=${{ env.TF_PROJECT }}" \
@@ -60,3 +66,34 @@ jobs:
             -input=false \
             -no-color \
             -detailed-exitcode
+
+      - name: Slack notify
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            {
+              "channel": "C02G0N65NEN",
+              "attachments": [
+                {
+                  "blocks": [
+                    {
+                      "type": "header",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Terraform Preview Result",
+                        "emoji": true
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "${{ githu.server_url }}/${{ github.repository}}/action/runs/${{ github.run_id }}"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
