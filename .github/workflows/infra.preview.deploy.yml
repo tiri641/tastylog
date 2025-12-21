@@ -90,7 +90,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "${{ githu.server_url }}/${{ github.repository}}/action/runs/${{ github.run_id }}"
+                        "text": "${{ github.server_url }}/${{ github.repository}}/action/runs/${{ github.run_id }}"
                       }
                     }
                   ]
